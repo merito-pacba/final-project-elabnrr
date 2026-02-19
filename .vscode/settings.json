@@ -1,0 +1,5 @@
+{
+    "python-envs.pythonProjects": [],
+    "appService.defaultWebAppToDeploy": "/subscriptions/0cdaa26b-8bc8-494d-837e-7c5dfa0978de/resourceGroups/appsvc_linux_polandcentral/providers/Microsoft.Web/sites/ela-meal-planner",
+    "appService.deploySubpath": "."
+}

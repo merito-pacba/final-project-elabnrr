@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Select Meals - Meal Planner</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .category-badge {
+            display: inline-block;
+            background: #edf2f7;
+            color: #4a5568;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75em;
+            text-transform: uppercase;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .calorie-text {
+            color: #f56565;
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+        .meal-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Meal Selection</h1>
+            <a href="/" class="back-link">Back to Home</a>
+        </header>
+        
+        <main>
+            <div class="planner-intro">
+                <h2>Choose Your Meals</h2>
+                <p>Select the dishes you want to cook this week</p>
+            </div>
+
+            <div class="selection-counter">
+                <span id="selectedCount">0</span> meals selected
+            </div>
+            
+            <div class="meals-grid">
+                {% for meal, data in meals.items() %}
+                <div class="meal-item">
+                    <input type="checkbox" id="{{ meal }}" name="meals" value="{{ meal }}" onchange="updateCounter()">
+                    <label for="{{ meal }}">
+                        <span class="category-badge">{{ data.category }}</span>
+                        <div class="meal-name">{{ meal }}</div>
+                        <div class="meal-meta">
+                            <span class="calorie-text">{{ data.calories }} kcal</span>
+                            <span>{{ data.ingredients|length }} ingredients</span>
+                        </div>
+                    </label>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <div class="action-section">
+                <button onclick="generateShoppingList()" class="btn-primary">Generate Shopping List</button>
+            </div>
+            
+            <div id="shoppingListSection" class="shopping-list-section" style="display: none;">
+                <h2>Your Shopping List</h2>
+                
+                <div class="selected-meals-display">
+                    <h3>Selected Meals</h3>
+                    <div id="selectedMealsDisplay"></div>
+                </div>
+                
+                <div class="ingredients-display">
+                    <h3>Ingredients to Buy</h3>
+                    <ul id="ingredientsList"></ul>
+                </div>
+                
+                <div class="action-buttons">
+                    <button onclick="window.print()" class="btn-secondary">Print List</button>
+                    <button onclick="resetSelection()" class="btn-outline">Start Over</button>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script>
+        function updateCounter() {
+            const checkboxes = document.querySelectorAll('input[name="meals"]:checked');
+            document.getElementById('selectedCount').textContent = checkboxes.length;
+        }
+
+        function generateShoppingList() {
+            const checkboxes = document.querySelectorAll('input[name="meals"]:checked');
+            const selectedMeals = Array.from(checkboxes).map(cb => cb.value);
+            
+            if (selectedMeals.length === 0) {
+                alert('Please select at least one meal');
+                return;
+            }
+            
+            fetch('/shopping-list', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ meals: selectedMeals })
+            })
+            .then(response => response.json())
+            .then(data => {
+                let mealsHTML = '<div class="meal-tags">';
+                data.selected_meals.forEach(meal => {
+                    mealsHTML += `<span class="meal-tag">${meal}</span>`;
+                });
+                mealsHTML += '</div>';
+                document.getElementById('selectedMealsDisplay').innerHTML = mealsHTML;
+                
+                let ingredientsHTML = '';
+                for (const [ingredient, count] of Object.entries(data.ingredients)) {
+                    const countBadge = count > 1 ? ` <span class="qty-badge">x${count}</span>` : '';
+                    ingredientsHTML += `<li>${ingredient}${countBadge}</li>`;
+                }
+                document.getElementById('ingredientsList').innerHTML = ingredientsHTML;
+                
+                document.getElementById('shoppingListSection').style.display = 'block';
+                document.getElementById('shoppingListSection').scrollIntoView({ behavior: 'smooth' });
+            })
+            .catch(error => {
+                alert('An error occurred: ' + error);
+            });
+        }
+
+        function resetSelection() {
+            document.getElementById('shoppingListSection').style.display = 'none';
+            document.querySelectorAll('input[name="meals"]').forEach(cb => cb.checked = false);
+            updateCounter();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>
