@@ -11,7 +11,7 @@ app = Flask(__name__)
 
 def get_db_connection():
     connection_string = (
-        f"DRIVER={{ODBC Driver 17 for SQL Server}};"
+        f"DRIVER={{ODBC Driver 18 for SQL Server}};TrustServerCertificate=yes;"
         f"SERVER={os.environ.get('DB_SERVER')};"
         f"DATABASE={os.environ.get('DB_NAME')};"
         f"UID={os.environ.get('DB_USER')};"
